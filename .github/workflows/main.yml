@@ -1,3 +1,8 @@
+name: Sshx Windows runner
+
+# Trigger the workflow on any push event to the repository
+on: [push]
+
 jobs:
   build:
     runs-on: windows-latest
