@@ -1,21 +1,12 @@
-name: Debug Windows Runner with sshx (PowerShell)
-on: [workflow_dispatch]
-
 jobs:
-  debug:
+  build:
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Download and Extract sshx via Tar
-        shell: powershell
+      - uses: actions/checkout@v4
+      
+      # Install and run sshx
+      - name: Start sshx
+        shell: pwsh
         run: |
-          # 1. Download the specific, pre-compiled Windows executable 
-          Invoke-WebRequest -Uri "https://github.com" -OutFile "sshx.zip"
-          
-          # 2. Extract using native Windows tar (bypasses Expand-Archive .NET bugs)
-          tar -xf sshx.zip
-          
-          # 3. Start the live multiplayer debugging session
-          ./sshx.exe run
+          Invoke-Expression (Invoke-RestMethod https://sshx.io)
+          sshx
