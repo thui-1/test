@@ -7,16 +7,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
         
-      - name: Manual Download and Run sshx
+      - name: Download and Extract sshx via Tar
         shell: powershell
         run: |
           # 1. Download the specific, pre-compiled Windows executable 
           Invoke-WebRequest -Uri "https://github.com" -OutFile "sshx.zip"
           
-          # 2. Extract the archive contents
-          Expand-Archive -Path "sshx.zip" -DestinationPath "."
+          # 2. Extract using native Windows tar (bypasses Expand-Archive .NET bugs)
+          tar -xf sshx.zip
           
           # 3. Start the live multiplayer debugging session
           ./sshx.exe run
