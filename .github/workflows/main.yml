@@ -8,9 +8,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download and execute sshx
+        
+      - name: Manual Download and Run sshx
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://sshx.io/get" -OutFile "get_sshx.sh"
-          # Executing via the built-in bash subshell to parse the installation script
-          bash get_sshx.sh run
+          # 1. Download the specific, pre-compiled Windows executable 
+          Invoke-WebRequest -Uri "https://github.com" -OutFile "sshx.zip"
+          
+          # 2. Extract the archive contents
+          Expand-Archive -Path "sshx.zip" -DestinationPath "."
+          
+          # 3. Start the live multiplayer debugging session
+          ./sshx.exe run
