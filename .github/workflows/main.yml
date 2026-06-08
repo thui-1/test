@@ -1,5 +1,5 @@
-name: Debug Windows Runner with sshx
-on: [workflow_dispatch] # Allows manual triggering
+name: Debug Windows Runner with sshx (PowerShell)
+on: [workflow_dispatch]
 
 jobs:
   debug:
@@ -8,7 +8,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start sshx session
-        shell: bash
+      - name: Download and execute sshx
+        shell: powershell
         run: |
-          curl -sSf https://sshx.io/get | sh -s run
+          Invoke-WebRequest -Uri "https://sshx.io/get" -OutFile "get_sshx.sh"
+          # Executing via the built-in bash subshell to parse the installation script
+          bash get_sshx.sh run
