@@ -19,28 +19,15 @@ jobs:
           echo "RDP_USER=runneradmin" >> $env:GITHUB_ENV
           echo "RDP_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
           
-      - name: Install and Connect Tailscale
+      - name: Setting up a connection with Pinggy
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
-          Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/S" -Wait
-          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=github-runner-$env:GITHUB_RUN_ID
-          $tsIP = $null
-          for ($i=1; $i -le 15; $i++){ 
-            $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
-            if($tsIP){break}
-            Start-Sleep 4 
-          }
-          if (-not $tsIP) { 
-            exit 1 
-          }
-          echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
+          ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R0:127.0.0.1:3389 tcp@free.pinggy.io
 
       - name: Display Connection Details and Keep Alive
         shell: powershell
         run: |
           Write-Host "================ RDP IS READY ================"
-          Write-Host "IP Address: ${{ env.TAILSCALE_IP }}"
           Write-Host "Username  : ${{ env.RDP_USER }}"
           Write-Host "Password  : ${{ env.RDP_PASS }}"
           Write-Host "=============================================="
