@@ -1,36 +1,14 @@
-name: Pure RDP via Tailscale
-
-on:
-  workflow_dispatch:
+name: Debug Windows Runner with sshx
+on: [workflow_dispatch] # Allows manual triggering
 
 jobs:
-  rdp-session:
-    runs-on: windows-11-arm
-    timeout-minutes: 360
-
+  debug:
+    runs-on: windows-latest
     steps:
-      - name: Configure RDP Service & User
-        shell: powershell
-        run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          $runnerAdminPass = "WindowsRDP#2025"
-          net user "runneradmin" $runnerAdminPass
-          echo "RDP_USER=runneradmin" >> $env:GITHUB_ENV
-          echo "RDP_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
-          
-      - name: Setting up a connection with Pinggy
-        shell: powershell
-        run: |
-          ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R0:127.0.0.1:3389 tcp@free.pinggy.io
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Display Connection Details and Keep Alive
-        shell: powershell
+      - name: Start sshx session
+        shell: bash
         run: |
-          Write-Host "================ RDP IS READY ================"
-          Write-Host "Username  : ${{ env.RDP_USER }}"
-          Write-Host "Password  : ${{ env.RDP_PASS }}"
-          Write-Host "=============================================="
-          while ($true) {
-            Start-Sleep 300
-          }
+          curl -sSf https://sshx.io/get | sh -s run
