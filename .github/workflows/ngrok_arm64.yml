@@ -1,0 +1,25 @@
+name: Windows ARM64 RDP
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-11-arm  # Specifies the ARM64 Windows runner
+    steps:
+      - name: Setup RDP
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+      - name: Get Ngrok Token
+        run: |
+          Invoke-WebRequest -Uri "https://equinox.io" -OutFile "ngrok.zip"
+          Expand-Archive -Path "ngrok.zip" -DestinationPath .
+
+      - name: Start Tunnel
+        run: |
+          .\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+          .\ngrok.exe tcp 3389
+
+      - name: Keep Alive
+        run: |
+          Start-Sleep -Seconds 3600 # Keeps the runner active for 1 hour
