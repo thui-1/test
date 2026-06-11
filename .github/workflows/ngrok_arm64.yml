@@ -1,25 +1,69 @@
-name: Windows ARM64 RDP
-on: workflow_dispatch
+name: Windows ARM64 RDP Access
+
+on: 
+  workflow_dispatch: # Aləti əl ilə (manual) başlatmaq üçün
+
 jobs:
-  build:
-    runs-on: windows-11-arm  # Specifies the ARM64 Windows runner
+  rdp-setup:
+    runs-on: windows-11-arm # Native Windows ARM64 runner-i çağırır
+    
     steps:
-      - name: Setup RDP
-        run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      - name: Get Ngrok Token
-        run: |
-          Invoke-WebRequest -Uri "https://equinox.io" -OutFile "ngrok.zip"
-          Expand-Archive -Path "ngrok.zip" -DestinationPath .
+    # 1. Runner-in real Public IP ünvanını yoxlayırıq
+    - name: Public IP Ünvanını Tap
+      id: ip
+      run: |
+        $ip = Invoke-RestMethod -Uri "https://ipify.org"
+        echo "Runner-in Public IP-si: $ip"
+        echo "ip=$ip" >> $env:GITHUB_OUTPUT
 
-      - name: Start Tunnel
-        run: |
-          .\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-          .\ngrok.exe tcp 3389
+    # 2. Windows daxilində RDP (Uzaqdan Masaüstü) funksiyasını aktivləşdiririk
+    - name: RDP Bağlantısını Aktivləşdir
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-Service -Name "TermService" -StartupType Automatic
+        Start-Service -Name "TermService"
 
-      - name: Keep Alive
-        run: |
-          Start-Sleep -Seconds 3600 # Keeps the runner active for 1 hour
+    # 3. Giriş üçün müvəqqəti Windows istifadəçi şifrəsi təyin edirik
+    - name: İstifadəçi Şifrəsini Yenilə
+      run: |
+        $Password = ConvertTo-SecureString "Masaustu123!ARM" -AsPlainText -Force
+        Set-LocalUser -Name "runneradmin" -Password $Password
+
+    # 4. Chocolatey vasitəsilə Ngrok yükləyirik
+    - name: Ngrok Yüklə və Quraşdır
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org'))
+        choco install ngrok -y
+
+    # 5. Ngrok tunelini işə salaraq RDP-ni xaricə açırıq
+    - name: RDP Tunelini Başlat (Ngrok)
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      run: |
+        ngrok config add-authtoken $env:NGROK_AUTH_TOKEN
+        Start-Process ngrok -ArgumentList "tcp 3389"
+        Start-Sleep -Seconds 10 # Tunelin tam oturması üçün gözləmə
+
+    # 6. Qoşulmaq üçün RDP ünvanını və portunu terminala çıxarırıq
+    - name: RDP Qoşulma Məlumatlarını Göstər
+      run: |
+        $TunnelInfo = Invoke-RestMethod -Uri "http://127.0.0"
+        $PublicUrl = $TunnelInfo.tunnels.public_url
+        $CleanUrl = $PublicUrl -replace "tcp://", ""
+        Write-Host "==========================================================" -ForegroundColor Green
+        Write-Host "RDP ÜNVANI (Host:Port): $CleanUrl" -ForegroundColor Yellow
+        Write-Host "İSTİFADƏÇİ ADI: runneradmin" -ForegroundColor Yellow
+        Write-Host "ŞİFRƏ: Masaustu123!ARM" -ForegroundColor Yellow
+        Write-Host "==========================================================" -ForegroundColor Green
+
+    # 7. İş axınının (Pipeline) dərhal bağlanmaması üçün 6 saatlıq gözləmə qoyuruq
+    - name: Seansı Açıq Saxla (Maksimum 6 Saat)
+      run: |
+        Write-Host "RDP tuneli aktivdir. İşiniz bitdikdə Actions panelindən Cancel edin."
+        Start-Sleep -Seconds 21600
