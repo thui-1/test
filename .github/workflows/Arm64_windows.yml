@@ -11,16 +11,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # tmate-in işləməsi üçün lazım olan MSYS2 mühitini quraşdırır
-      - name: Setup MSYS2
+      # 1. MSYS2 mühitini ARM64 üçün xüsusi olaraq quraşdırın və ID təyin edin
+      - name: Setup MSYS2 for ARM64
         uses: msys2/setup-msys2@v2
+        id: setup-msys2 # Bu ID sonrakı addım üçün vacibdir
         with:
           update: true
-          install: tmate
 
-      # İndi tmate problemsiz işə düşəcək
+      # 2. tmate sessiyasını MSYS2 yerləşməsini bəyan edərək başladın
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         with:
           detached: false
           limit-access-to-actor: true
+          # Yuxarıdakı addımın çıxış parametrini bura ötürərək ENOENT xətasını həll edirik
+          msys2-location: ${{ steps.setup-msys2.outputs.msys2-location }}
