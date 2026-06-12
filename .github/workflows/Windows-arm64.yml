@@ -1,50 +1,57 @@
-name: Windows ARM64 RDP vasitəsilə Tailscale
+name: Windows ARM64 Secure RDP
 
 on: 
-  workflow_dispatch: # Mexaniki olaraq işə salmaq üçün
+  workflow_dispatch: # Allows you to trigger the session manually
 
 jobs:
-  rdp-connection:
-    runs-on: windows-11-arm  # Pulsuz ARM64 GitHub runner
-    
-    permissions:
-      id-token: write       # Tailscale OIDC autentifikasiyası üçün mütləqdir
-
+  rdp-session:
+    runs-on: windows-11-arm # Uses the standard Windows 11 ARM64 hosted runner
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Tailscale Bağlantısını Qur
-  uses: tailscale/github-action@v4
-  with:
-    # Secret istifadə etmirik, birbaşa OIDC ilə qoşuluruq
-    auth-key: "" 
-    tags: tag:ci     # Tailscale panelinizdə müvafiq tag-in olduğundan əmin olun
+      - name: Install Tailscale via Chocolatey
+        run: |
+          choco install tailscale -y
+          refreshenv
 
-      - name: Windows RDP və İstifadəçi Konfiqurasiyası
+      - name: Connect to Tailscale Network
+        shell: cmd
+        run: |
+          tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --accept-routes
+
+      - name: Configure Windows User and Enable RDP
         shell: powershell
         run: |
-          # RDP funksiyasını aktivləşdirin
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          
-          # NLA təhlükəsizliyini söndürün (Bəzi müştəri proqramlarında bağlantı probleminin qarşısını almaq üçün)
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
-
-          # Müvəqqəti RDP istifadəçisi və şifrəsi yaradın
-          $Password = ConvertTo-SecureString "GuvenliSifre123!" -AsPlainText -Force
-          New-LocalUser "RunnerAdmin" -Password $Password -Description "RDP Istifadecisi"
+          # 1. Create a local administrator account
+          $Password = ConvertTo-SecureString "YourSecurePassword123!" -AsPlainText -Force
+          New-LocalUser -Name "RunnerAdmin" -Password $Password -Description "RDP Admin User"
           Add-LocalGroupMember -Group "Administrators" -Member "RunnerAdmin"
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RunnerAdmin"
 
-      - name: Tailscale IP Ünvanını Göstər və Gözləmə Rejimi
+          # 2. Enable Remote Desktop (RDP) Service
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+          # 3. Configure Firewall specifically for the Tailscale adapter interface
+          Set-NetFirewallRule -DisplayGroup "Remote Desktop" -Profile Private,Public,Domain -Enabled True
+
+      - name: Fetch and Display Tailscale IP Address
         shell: powershell
         run: |
-          # Runner-in Tailnet daxilindəki IP ünvanını konsola yazdırın
-          $tsIp = (tailscale ip -4)
-          Write-Host "==========================================================" -ForegroundColor Green
-          Write-Host "Tailscale IP Ünvanınız: $tsIp" -ForegroundColor Cyan
-          Write-Host "İstifadəçi adı: RunnerAdmin" -ForegroundColor Cyan
-          Write-Host "Şifrə: GuvenliSifre123!" -ForegroundColor Cyan
-          Write-Host "==========================================================" -ForegroundColor Green
-          
-          # İş axınının dərhal bitməməsi və qoşula bilməniz üçün (Məsələn: 2 saat/7200 saniyə saxlayır)
-          Start-Sleep -Seconds 7200
+          Write-Host "===================================================="
+          Write-Host "Tailscale IP to connect via RDP:"
+          tailscale ip -4
+          Write-Host "Username: RunnerAdmin"
+          Write-Host "Password: YourSecurePassword123!"
+          Write-Host "===================================================="
+
+      - name: Keep Runner Alive (6-Hour GitHub Limit)
+        shell: powershell
+        run: |
+          # Keeps the job running so your RDP session doesn't instantly close
+          $Timeout = New-TimeSpan -Hours 5 -Minutes 50
+          $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+          while ($Stopwatch.Elapsed -lt $Timeout) {
+              Start-Sleep -Seconds 60
+          }
