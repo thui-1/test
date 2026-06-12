@@ -11,13 +11,13 @@ jobs:
       id-token: write       # Tailscale OIDC autentifikasiyası üçün mütləqdir
 
     steps:
-      - name: Repozitoriyanı yoxla
-        uses: actions/checkout@v4
 
       - name: Tailscale Bağlantısını Qur
-        uses: tailscale/github-action@v4
-        with:
-          auth-key: ${{ secrets.TAILSCALE_AUTH_KEY }} # Tailscale Admin konsolundan götürülən Ephemeral Key
+  uses: tailscale/github-action@v4
+  with:
+    # Secret istifadə etmirik, birbaşa OIDC ilə qoşuluruq
+    auth-key: "" 
+    tags: tag:ci     # Tailscale panelinizdə müvafiq tag-in olduğundan əmin olun
 
       - name: Windows RDP və İstifadəçi Konfiqurasiyası
         shell: powershell
