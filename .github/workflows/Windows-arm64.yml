@@ -18,7 +18,7 @@ jobs:
       - name: Connect to Tailscale Network
         shell: cmd
         run: |
-          tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --accept-routes
+          "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --accept-routes
 
       - name: Configure Windows User and Enable RDP
         shell: powershell
