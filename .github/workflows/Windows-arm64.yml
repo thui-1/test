@@ -41,7 +41,7 @@ jobs:
         run: |
           Write-Host "===================================================="
           Write-Host "Tailscale IP to connect via RDP:"
-          tailscale ip -4
+          "C:\Program Files\Tailscale\tailscale.exe" ip -4
           Write-Host "Username: RDP"
           Write-Host "Password: 29122012@Taryel"
           Write-Host "===================================================="
