@@ -1,0 +1,50 @@
+name: Windows ARM64 RDP vasitəsilə Tailscale
+
+on: 
+  workflow_dispatch: # Mexaniki olaraq işə salmaq üçün
+
+jobs:
+  rdp-connection:
+    runs-on: windows-11-arm  # Pulsuz ARM64 GitHub runner
+    
+    permissions:
+      id-token: write       # Tailscale OIDC autentifikasiyası üçün mütləqdir
+
+    steps:
+      - name: Repozitoriyanı yoxla
+        uses: actions/checkout@v4
+
+      - name: Tailscale Bağlantısını Qur
+        uses: tailscale/github-action@v4
+        with:
+          auth-key: ${{ secrets.TAILSCALE_AUTH_KEY }} # Tailscale Admin konsolundan götürülən Ephemeral Key
+
+      - name: Windows RDP və İstifadəçi Konfiqurasiyası
+        shell: powershell
+        run: |
+          # RDP funksiyasını aktivləşdirin
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          
+          # NLA təhlükəsizliyini söndürün (Bəzi müştəri proqramlarında bağlantı probleminin qarşısını almaq üçün)
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
+
+          # Müvəqqəti RDP istifadəçisi və şifrəsi yaradın
+          $Password = ConvertTo-SecureString "GuvenliSifre123!" -AsPlainText -Force
+          New-LocalUser "RunnerAdmin" -Password $Password -Description "RDP Istifadecisi"
+          Add-LocalGroupMember -Group "Administrators" -Member "RunnerAdmin"
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RunnerAdmin"
+
+      - name: Tailscale IP Ünvanını Göstər və Gözləmə Rejimi
+        shell: powershell
+        run: |
+          # Runner-in Tailnet daxilindəki IP ünvanını konsola yazdırın
+          $tsIp = (tailscale ip -4)
+          Write-Host "==========================================================" -ForegroundColor Green
+          Write-Host "Tailscale IP Ünvanınız: $tsIp" -ForegroundColor Cyan
+          Write-Host "İstifadəçi adı: RunnerAdmin" -ForegroundColor Cyan
+          Write-Host "Şifrə: GuvenliSifre123!" -ForegroundColor Cyan
+          Write-Host "==========================================================" -ForegroundColor Green
+          
+          # İş axınının dərhal bitməməsi və qoşula bilməniz üçün (Məsələn: 2 saat/7200 saniyə saxlayır)
+          Start-Sleep -Seconds 7200
