@@ -7,16 +7,20 @@ jobs:
   debug-windows-arm:
     # Rəsmi Windows 11 ARM64 runner-i çağırmaq üçün təyin edilən etiket
     runs-on: windows-11-arm
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Sazlama (debugging) sessiyasını başlatan əsas tmate addımı
+      # tmate-in işləməsi üçün lazım olan MSYS2 mühitini quraşdırır
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: tmate
+
+      # İndi tmate problemsiz işə düşəcək
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         with:
-          # Əgər tmate-in sessiyanı bloklamasını və siz çıxana qədər gözləməsini istəyirsinizsə:
           detached: false
-          # Profilinizdəki SSH açarlarını qeydiyyatdan keçiribsə, yalnız siz qoşula bilərsiniz
           limit-access-to-actor: true
