@@ -2,12 +2,17 @@ name: Windows ARM64 Runner
 on: push
 
 jobs:
-  build:
-    # Use the new Windows ARM64 runner label
-    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
+      # 1. Install MSYS2 on the Windows ARM64 runner
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        id: setup-msys2
+
+      # 2. Tell tmate to use this specific MSYS2 installation
       - name: Setup Tmate (Debug Access)
         uses: mxschmitt/action-tmate@v3
+        with:
+          msys2-location: ${{ steps.setup-msys2.outputs.msys2-location }}
