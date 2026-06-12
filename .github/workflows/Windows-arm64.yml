@@ -24,10 +24,10 @@ jobs:
         shell: powershell
         run: |
           # 1. Create a local administrator account
-          $Password = ConvertTo-SecureString "YourSecurePassword123!" -AsPlainText -Force
-          New-LocalUser -Name "RunnerAdmin" -Password $Password -Description "RDP Admin User"
-          Add-LocalGroupMember -Group "Administrators" -Member "RunnerAdmin"
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RunnerAdmin"
+          $Password = ConvertTo-SecureString "29122012@Taryel" -AsPlainText -Force
+          New-LocalUser -Name "RDP" -Password $Password -Description "RDP Admin User"
+          Add-LocalGroupMember -Group "Administrators" -Member "RDP"
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RDP"
 
           # 2. Enable Remote Desktop (RDP) Service
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
@@ -42,8 +42,8 @@ jobs:
           Write-Host "===================================================="
           Write-Host "Tailscale IP to connect via RDP:"
           tailscale ip -4
-          Write-Host "Username: RunnerAdmin"
-          Write-Host "Password: YourSecurePassword123!"
+          Write-Host "Username: RDP"
+          Write-Host "Password: 29122012@Taryel"
           Write-Host "===================================================="
 
       - name: Keep Runner Alive (6-Hour GitHub Limit)
