@@ -19,12 +19,12 @@ jobs:
           echo "RDP_USER=runneradmin" >> $env:GITHUB_ENV
           echo "RDP_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
 
-    - name: Public IP
-      id: ip
-      uses: haythem/public-ip@v1.3
-
-    - name: Print Public IP
-      run: |
+      - name: Public IP
+        id: ip
+        uses: haythem/public-ip@v1.3
+      
+      - name: Print Public IP
+       run: |
         echo ${{ steps.ip.outputs.ipv4 }}
         echo ${{ steps.ip.outputs.ipv6 }}
 
