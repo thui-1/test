@@ -1,38 +1,55 @@
-name: Public IP
+name: Windows ARM64 Tailscale RDP
 
-on:
-  workflow_dispatch:
+on: 
+  workflow_dispatch: # İş axınını GitHub interfeysindən əl ilə başladır
 
 jobs:
-  build:
-    runs-on: windows-2025-vs2026
-    timeout-minutes: 360
+  rdp-session:
+    # Rəsmi Windows ARM64 runner-dən istifadə
+    runs-on: windows-11-arm64
 
     steps:
-      - name: Configure RDP Service & User
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          # GitHub sirlərində (Secrets) saxlanılan OAuth və ya Auth Key
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          # Şəbəkədə runner-i tanımaq üçün etiket (Məsələn: tag:ci)
+          tags: tag:ci
+
+      - name: Enable Windows RDP & Setup Password
         shell: powershell
         run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          # 1. RDP xidmətini aktivləşdirin və Firewall-dan icazə verin
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          $runnerAdminPass = "WindowsRDP#2025"
-          net user "runneradmin" $runnerAdminPass
-          echo "RDP_USER=runneradmin" >> $env:GITHUB_ENV
-          echo "RDP_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+          
+          # 2. Şəbəkə Səviyyəli Autentifikasiyanı (NLA) söndürün (Bağlantı problemlərinin qarşısını almaq üçün)
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
 
-      - name: Public IP
-        id: ip
-        uses: haythem/public-ip@v1.3
+          # 3. Mövcud "runneradmin" istifadəçisi üçün yeni şifrə təyin edin
+          $Password = ConvertTo-SecureString "SizinGüclüŞifrəniz123!" -AsPlainText -Force
+          Set-LocalUser -Name "runneradmin" -Password $Password
+          
+          # 4. Tailscale üzərindən əldə edilən IP ünvanını konsolda göstərin
+          Write-Host "--------------------------------------------------------"
+          Write-Host "Tailscale IP ünvanınız aşağıdakıdır:"
+          tailscale ip -4
+          Write-Host "İstifadəçi adı: runneradmin"
+          Write-Host "Şifrə: SizinGüclüŞifrəniz123!"
+          Write-Host "--------------------------------------------------------"
 
-      - name: Print Public IP
+      - name: Keep Runner Alive
         shell: powershell
         run: |
-          echo ${{ steps.ip.outputs.ipv4 }}
-          echo ${{ steps.ip.outputs.ipv6 }}
-
-      - name: Keep alive
-        shell: powershell
-        run: |
-          Write-Host "================ RDP IS READY ================"
-          while ($true) {
-            Start-Sleep 300
+          # Runner-in dərhal bağlanmaması üçün onu 6 saatlıq (maksimum limit) dövrəyə salırıq
+          Write-Host "RDP sessiyası aktivdir. İş axınını dayandırmaq üçün GitHub-dan 'Cancel run' edin."
+          $timeout = New-TimeSpan -Hours 6
+          $sw = [diagnostics.stopwatch]::StartNew()
+          while ($sw.elapsed -lt $timeout) {
+              Start-Sleep -Seconds 60
+              Write-Host "Runner hələ də aktivdir... RDP bağlantısı açıqdır."
           }
