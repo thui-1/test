@@ -31,7 +31,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
 
           # 3. Mövcud "runneradmin" istifadəçisi üçün yeni şifrə təyin edin
-          $Password = ConvertTo-SecureString "SizinGüclüŞifrəniz123!" -AsPlainText -Force
+          $Password = ConvertTo-SecureString "WindowsRDP#2025" -AsPlainText -Force
           Set-LocalUser -Name "runneradmin" -Password $Password
           
           # 4. Tailscale üzərindən əldə edilən IP ünvanını konsolda göstərin
