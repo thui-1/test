@@ -1,12 +1,24 @@
 name: Public IP
 
-on: push
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-2025-vs2026
+    timeout-minutes: 360
 
     steps:
+      - name: Configure RDP Service & User
+        shell: powershell
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          $runnerAdminPass = "WindowsRDP#2025"
+          net user "runneradmin" $runnerAdminPass
+          echo "RDP_USER=runneradmin" >> $env:GITHUB_ENV
+          echo "RDP_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+
     - name: Public IP
       id: ip
       uses: haythem/public-ip@v1.3
@@ -15,3 +27,11 @@ jobs:
       run: |
         echo ${{ steps.ip.outputs.ipv4 }}
         echo ${{ steps.ip.outputs.ipv6 }}
+
+    - name: Keep alive
+      shell: powershell
+      run: |
+        Write-Host "================ RDP IS READY ================"
+          while ($true) {
+            Start-Sleep 300
+          }
