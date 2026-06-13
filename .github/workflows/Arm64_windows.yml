@@ -1,29 +1,17 @@
-name: Windows ARM64 Debugging with tmate
+name: Public IP
 
-on: 
-  workflow_dispatch: # Lazım olduqda paneldən əl ilə başladılması üçün
+on: push
 
 jobs:
-  debug-windows-arm:
-    # Rəsmi Windows 11 ARM64 runner-i çağırmaq üçün təyin edilən etiket
-    runs-on: windows-11-arm
+  build:
+    runs-on: windows-2025-vs2026
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Public IP
+      id: ip
+      uses: haythem/public-ip@v1.3
 
-      # 1. MSYS2 mühitini ARM64 üçün xüsusi olaraq quraşdırın və ID təyin edin
-      - name: Setup MSYS2 for ARM64
-        uses: msys2/setup-msys2@v2
-        id: setup-msys2 # Bu ID sonrakı addım üçün vacibdir
-        with:
-          update: true
-
-      # 2. tmate sessiyasını MSYS2 yerləşməsini bəyan edərək başladın
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: false
-          # Limiti söndürürük, beləcə SSH açarı tələb olunmayacaq
-          limit-access-to-actor: false 
-          msys2-location: ${{ steps.setup-msys2.outputs.msys2-location }}
-
+    - name: Print Public IP
+      run: |
+        echo ${{ steps.ip.outputs.ipv4 }}
+        echo ${{ steps.ip.outputs.ipv6 }}
