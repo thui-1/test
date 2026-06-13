@@ -10,7 +10,7 @@ jobs:
       - name: Install Tailscale
         uses: tailscale/github-action@v3
         with:
-          authkey: ${{ secrets.TS_AUTHKEY }}
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
 
       - name: Setup Gnome and RDP
         run: |
