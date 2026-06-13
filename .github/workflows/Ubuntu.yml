@@ -1,5 +1,5 @@
 name: RDP-over-Tailscale
-on: push
+on: workflow_dispatch
 jobs:
   rdp:
     runs-on: ubuntu-latest
