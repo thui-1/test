@@ -1,0 +1,26 @@
+name: RDP-over-Tailscale
+on: push
+jobs:
+  rdp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      - name: Setup Gnome and RDP
+        run: |
+          sudo apt update
+          sudo apt install -y ubuntu-desktop xrdp gnome
+          # Configure RDP user/pass
+          echo "ubuntu:password" | sudo chpasswd
+          # Start XRDP
+          sudo systemctl enable xrdp
+          sudo systemctl start xrdp
+
+      - name: Keepalive
+        run: sleep 3600 # Keep job running to maintain RDP access
