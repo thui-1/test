@@ -1,5 +1,5 @@
 name: Debug macOS Workflow
-on: [push, workflow_dispatch]
+on: workflow_dispatch
 
 jobs:
   debug-mac:
