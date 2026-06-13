@@ -6,7 +6,7 @@ on:
 jobs:
   rdp-session:
     # Rəsmi Windows ARM64 runner-dən istifadə
-    runs-on: windows-11-arm64
+    runs-on: windows-11-arm
 
     steps:
       - name: Checkout Repository
