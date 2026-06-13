@@ -1,0 +1,13 @@
+name: Debug macOS Workflow
+on: [push, workflow_dispatch]
+
+jobs:
+  debug-mac:
+    runs-on: macos-latest  # Supports the latest macOS environments
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Place this step exactly where you want the build to pause for debugging
+      - name: Setup Tmate SSH Session
+        uses: mxschmitt/action-tmate@v3
