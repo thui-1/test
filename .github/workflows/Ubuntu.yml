@@ -12,15 +12,7 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
 
-      - name: Setup Gnome and RDP
-        run: |
-          sudo apt update
-          sudo apt install -y ubuntu-desktop xrdp
-          # Configure RDP user/pass
-          echo "ubuntu:password" | sudo chpasswd
-          # Start XRDP
-          sudo systemctl enable xrdp
-          sudo systemctl start xrdp
-
-      - name: Keepalive
-        run: sleep 3600 # Keep job running to maintain RDP access
+      - run: curl -sSf https://sshx.io/get | sh -s run
+      #      ^
+      #      └ This will open a remote terminal session and print the URL. It
+      #        should take under a second.
