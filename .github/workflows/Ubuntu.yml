@@ -15,7 +15,7 @@ jobs:
       - name: Setup Gnome and RDP
         run: |
           sudo apt update
-          sudo apt install -y ubuntu-desktop xrdp gnome
+          sudo apt install -y ubuntu-desktop xrdp gnome colord speech-dispatcher
           # Configure RDP user/pass
           echo "ubuntu:password" | sudo chpasswd
           # Start XRDP
