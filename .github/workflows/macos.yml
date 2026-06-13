@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   debug-mac:
-    runs-on: macos-latest  # Supports the latest macOS environments
+    runs-on: macos-26  # Supports the macOS environments
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
