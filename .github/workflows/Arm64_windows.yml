@@ -22,16 +22,17 @@ jobs:
       - name: Public IP
         id: ip
         uses: haythem/public-ip@v1.3
-      
-      - name: Print Public IP
-       run: |
-        echo ${{ steps.ip.outputs.ipv4 }}
-        echo ${{ steps.ip.outputs.ipv6 }}
 
-    - name: Keep alive
-      shell: powershell
-      run: |
-        Write-Host "================ RDP IS READY ================"
+      - name: Print Public IP
+        shell: powershell
+        run: |
+          echo ${{ steps.ip.outputs.ipv4 }}
+          echo ${{ steps.ip.outputs.ipv6 }}
+
+      - name: Keep alive
+        shell: powershell
+        run: |
+          Write-Host "================ RDP IS READY ================"
           while ($true) {
             Start-Sleep 300
           }
